@@ -1,16 +1,18 @@
+// clang -fobjc-arc -stdlib=libc++ -lstdc++ -std=c++17 -framework IOKit -o ST-USB-Issue-Repro ST-USB-Issue-Repro.mm
+// ./ST-USB-Issue-Repro
+
 #import <Foundation/Foundation.h>
 #import <IOKit/IOKitLib.h>
 #import <IOKit/usb/IOUSBLib.h>
 #import <IOKit/IOCFPlugIn.h>
+#import <string>
 #import <vector>
+#import <mach/mach_error.h>
 
-constexpr uint16_t VID = 51966;
-constexpr uint16_t PID = 16384;
-
-static io_service_t _FindService() {
+static io_service_t _FindService(uint16_t vid, uint16_t pid) {
     NSMutableDictionary* dict = [(__bridge id)IOServiceMatching(kIOUSBDeviceClassName) mutableCopy];
-    dict[@kUSBVendorID] = @(VID);
-    dict[@kUSBProductID] = @(PID);
+    dict[@kUSBVendorID] = @(vid);
+    dict[@kUSBProductID] = @(pid);
     CFRetain((__bridge CFTypeRef)dict); // Retain on behalf of IOServiceGetMatchingServices
     
     std::vector<io_service_t> services;
@@ -52,32 +54,38 @@ static IOUSBDeviceInterface** _GetUSBDeviceInterface(io_service_t service) {
 int main(int argc, const char* argv[]) {
     
     try {
+        if (argc != 3) {
+            throw std::runtime_error(std::string("Usage: ") + argv[0] + " <vid> <pid>");
+        }
+        
+        const uint16_t vid = std::stoi(argv[1]);
+        const uint16_t pid = std::stoi(argv[2]);
+        
+        // Get service
+        const io_service_t service = _FindService(vid, pid);
+        IOUSBDeviceInterface**const usbDevice = _GetUSBDeviceInterface(service);
+        
+        for (uintmax_t i=0;; i++) {
+            uint8_t status[2];
+            IOUSBDevRequest req = {
+                .bmRequestType  = USBmakebmRequestType(kUSBIn, kUSBStandard, kUSBDevice),
+                .bRequest       = kUSBRqGetStatus,
+                .wValue         = 0,
+                .wIndex         = 0,
+                .wLength        = 2,
+                .pData          = status,
+            };
+            
+            IOReturn ior = (*usbDevice)->DeviceRequest(usbDevice, &req);
+            if (ior != kIOReturnSuccess) {
+                throw std::runtime_error(std::string("ControlRequest failed: ") + mach_error_string(ior));
+            }
+            printf("GetStatus control request succeeded (%ju)\n", i);
+        }
     
     } catch (const std::exception& e) {
         fprintf(stderr, "Error: %s\n", e.what());
         return 1;
-    }
-    
-    // Get service
-    io_service_t service = _FindService();
-    IOUSBDeviceInterface** usbDevice = _GetUSBDeviceInterface(service);
-    
-    for (;;) {
-        uint8_t status[2];
-        IOUSBDevRequest req = {
-            .bmRequestType  = USBmakebmRequestType(kUSBIn, kUSBStandard, kUSBDevice),
-            .bRequest       = kUSBRqGetStatus,
-            .wValue         = 0,
-            .wIndex         = 0,
-            .wLength        = 2,
-            .pData          = status,
-        };
-        
-        IOReturn ior = (*usbDevice)->DeviceRequest(usbDevice, &req);
-        if (ior != kIOReturnSuccess) {
-            throw std::runtime_error("ControlRequest failed");
-        }
-        printf("GetStatus control request succeeded\n");
     }
     
     return 0;
