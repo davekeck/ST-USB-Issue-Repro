@@ -17,7 +17,7 @@ static io_service_t _FindService(uint16_t vid, uint16_t pid) {
     
     std::vector<io_service_t> services;
     io_iterator_t iter = MACH_PORT_NULL;
-    kern_return_t kr = IOServiceGetMatchingServices(kIOMasterPortDefault, (__bridge CFDictionaryRef)dict, &iter);
+    kern_return_t kr = IOServiceGetMatchingServices(0, (__bridge CFDictionaryRef)dict, &iter);
     if (kr != kIOReturnSuccess) {
         throw std::runtime_error("IOServiceGetMatchingServices failed");
     }
