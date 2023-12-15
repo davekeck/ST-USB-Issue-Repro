@@ -1,5 +1,5 @@
 // clang -fobjc-arc -stdlib=libc++ -lstdc++ -std=c++17 -framework IOKit -o ST-USB-Issue-Repro ST-USB-Issue-Repro.mm
-// ./ST-USB-Issue-Repro
+// ./ST-USB-Issue-Repro <vid> <pid>
 
 #import <Foundation/Foundation.h>
 #import <IOKit/IOKitLib.h>
