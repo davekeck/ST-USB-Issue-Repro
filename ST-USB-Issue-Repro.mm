@@ -7,6 +7,7 @@
 #import <IOKit/IOCFPlugIn.h>
 #import <string>
 #import <vector>
+#import <chrono>
 #import <mach/mach_error.h>
 
 static io_service_t _FindService(uint16_t vid, uint16_t pid) {
@@ -65,7 +66,9 @@ int main(int argc, const char* argv[]) {
         const io_service_t service = _FindService(vid, pid);
         IOUSBDeviceInterface**const usbDevice = _GetUSBDeviceInterface(service);
         
-        for (uintmax_t i=0;; i++) {
+        constexpr uintmax_t RequestCount = 10000;
+        auto timeStart = std::chrono::steady_clock::now();
+        for (uintmax_t i=0; i<RequestCount; i++) {
             uint8_t status[2];
             IOUSBDevRequest req = {
                 .bmRequestType  = USBmakebmRequestType(kUSBIn, kUSBStandard, kUSBDevice),
@@ -81,7 +84,10 @@ int main(int argc, const char* argv[]) {
                 throw std::runtime_error(std::string("ControlRequest failed: ") + mach_error_string(ior));
             }
             printf("GetStatus control request succeeded (%ju)\n", i);
+//            return 0;
         }
+        const std::chrono::microseconds durationUs = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - timeStart);
+        printf("%.1f requests per second\n", ((float)RequestCount / durationUs.count()) * 1000000);
     
     } catch (const std::exception& e) {
         fprintf(stderr, "Error: %s\n", e.what());
