@@ -83,7 +83,7 @@ int main(int argc, const char* argv[]) {
             if (ior != kIOReturnSuccess) {
                 throw std::runtime_error(std::string("ControlRequest failed: ") + mach_error_string(ior));
             }
-            printf("GetStatus control request succeeded (%ju)\n", i);
+//            printf("GetStatus control request succeeded (%ju)\n", i);
 //            return 0;
         }
         const std::chrono::microseconds durationUs = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - timeStart);
