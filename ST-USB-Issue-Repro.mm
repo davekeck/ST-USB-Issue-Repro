@@ -90,7 +90,7 @@ int main(int argc, const char* argv[]) {
         printf("%.1f requests per second\n", ((float)RequestCount / durationUs.count()) * 1000000);
     
     } catch (const std::exception& e) {
-        system("say fail");
+        // system("say fail");
         fprintf(stderr, "Error: %s\n", e.what());
         return 1;
     }
