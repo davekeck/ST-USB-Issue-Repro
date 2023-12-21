@@ -66,31 +66,33 @@ int main(int argc, const char* argv[]) {
         const io_service_t service = _FindService(vid, pid);
         IOUSBDeviceInterface**const usbDevice = _GetUSBDeviceInterface(service);
         
-        constexpr uintmax_t RequestCount = 10000;
-        auto timeStart = std::chrono::steady_clock::now();
-        for (uintmax_t i=0; i<RequestCount; i++) {
-            uint8_t status[2];
-            IOUSBDevRequest req = {
-                .bmRequestType  = USBmakebmRequestType(kUSBIn, kUSBStandard, kUSBDevice),
-                .bRequest       = kUSBRqGetStatus,
-                .wValue         = 0,
-                .wIndex         = 0,
-                .wLength        = 2,
-                .pData          = status,
-            };
+        for (;;) {
+            constexpr uintmax_t RequestCount = 10000;
+            auto timeStart = std::chrono::steady_clock::now();
+            for (uintmax_t i=0; i<RequestCount; i++) @autoreleasepool {
+                uint8_t status[2];
+                IOUSBDevRequest req = {
+                    .bmRequestType  = USBmakebmRequestType(kUSBIn, kUSBStandard, kUSBDevice),
+                    .bRequest       = kUSBRqGetStatus,
+                    .wValue         = 0,
+                    .wIndex         = 0,
+                    .wLength        = 2,
+                    .pData          = status,
+                };
             
-            IOReturn ior = (*usbDevice)->DeviceRequest(usbDevice, &req);
-            if (ior != kIOReturnSuccess) {
-                throw std::runtime_error(std::string("ControlRequest failed: ") + mach_error_string(ior));
+                IOReturn ior = (*usbDevice)->DeviceRequest(usbDevice, &req);
+                if (ior != kIOReturnSuccess) {
+                    throw std::runtime_error(std::string("ControlRequest failed: ") + mach_error_string(ior));
+                }
+    //            printf("GetStatus control request succeeded (%ju)\n", i);
+    //            return 0;
             }
-//            printf("GetStatus control request succeeded (%ju)\n", i);
-//            return 0;
+            const std::chrono::microseconds durationUs = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - timeStart);
+            printf("%.1f requests per second\n", ((float)RequestCount / durationUs.count()) * 1000000);
         }
-        const std::chrono::microseconds durationUs = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - timeStart);
-        printf("%.1f requests per second\n", ((float)RequestCount / durationUs.count()) * 1000000);
     
     } catch (const std::exception& e) {
-        // system("say fail");
+        system("say fail");
         fprintf(stderr, "Error: %s\n", e.what());
         return 1;
     }
