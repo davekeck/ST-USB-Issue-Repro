@@ -103,5 +103,5 @@ int main(int argc, const char* argv[]) {
     }
     
     printf("Successful control request count: %ju\n", successCount);
-    return 0;
+    return (success ? 0 : 1);
 }
