@@ -53,7 +53,8 @@ static IOUSBDeviceInterface** _GetUSBDeviceInterface(io_service_t service) {
 }
 
 int main(int argc, const char* argv[]) {
-    
+    bool success = true;
+    uintmax_t successCount = 0;
     try {
         if (argc != 3) {
             throw std::runtime_error(std::string("Usage: ") + argv[0] + " <vid> <pid>");
@@ -84,6 +85,7 @@ int main(int argc, const char* argv[]) {
                 if (ior != kIOReturnSuccess) {
                     throw std::runtime_error(std::string("ControlRequest failed: ") + mach_error_string(ior));
                 }
+                successCount++;
     //            printf("GetStatus control request succeeded (%ju)\n", i);
     //            return 0;
             }
@@ -97,8 +99,9 @@ int main(int argc, const char* argv[]) {
         // in case stderr is redirected to stdout
         fflush(stdout);
         fprintf(stderr, "Error: %s\n", e.what());
-        return 1;
+        success = false;
     }
     
+    printf("Successful control request count: %ju\n", successCount);
     return 0;
 }
