@@ -93,6 +93,9 @@ int main(int argc, const char* argv[]) {
     
     } catch (const std::exception& e) {
         system("say fail");
+        // Ensure that the error gets printed after all our regular output,
+        // in case stderr is redirected to stdout
+        fflush(stdout);
         fprintf(stderr, "Error: %s\n", e.what());
         return 1;
     }
