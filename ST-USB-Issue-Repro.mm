@@ -73,16 +73,18 @@ int main(int argc, const char* argv[]) {
             auto timeStart = std::chrono::steady_clock::now();
             for (uintmax_t i=0; i<RequestCount; i++) @autoreleasepool {
                 uint8_t status[2];
-                IOUSBDevRequest req = {
-                    .bmRequestType  = USBmakebmRequestType(kUSBIn, kUSBStandard, kUSBDevice),
-                    .bRequest       = kUSBRqGetStatus,
-                    .wValue         = 0,
-                    .wIndex         = 0,
-                    .wLength        = 2,
-                    .pData          = status,
+                IOUSBDevRequestTO req = {
+                    .bmRequestType     = USBmakebmRequestType(kUSBIn, kUSBStandard, kUSBDevice),
+                    .bRequest          = kUSBRqGetStatus,
+                    .wValue            = 0,
+                    .wIndex            = 0,
+                    .wLength           = 2,
+                    .pData             = status,
+                    .noDataTimeout     = 500,
+                    .completionTimeout = 500,
                 };
             
-                IOReturn ior = (*usbDevice)->DeviceRequest(usbDevice, &req);
+                IOReturn ior = (*usbDevice)->DeviceRequestTO(usbDevice, &req);
                 if (ior != kIOReturnSuccess) {
                     throw std::runtime_error(std::string("ControlRequest failed: ") + mach_error_string(ior));
                 }
