@@ -67,8 +67,9 @@ int main(int argc, const char* argv[]) {
         const io_service_t service = _FindService(vid, pid);
         IOUSBDeviceInterface**const usbDevice = _GetUSBDeviceInterface(service);
         
-        for (;;) {
-            constexpr uintmax_t RequestCount = 10000;
+        // for (;;) {
+            // constexpr uintmax_t RequestCount = 5000;
+            constexpr uintmax_t RequestCount = 1000;
             auto timeStart = std::chrono::steady_clock::now();
             for (uintmax_t i=0; i<RequestCount; i++) @autoreleasepool {
                 uint8_t status[2];
@@ -86,12 +87,12 @@ int main(int argc, const char* argv[]) {
                     throw std::runtime_error(std::string("ControlRequest failed: ") + mach_error_string(ior));
                 }
                 successCount++;
-    //            printf("GetStatus control request succeeded (%ju)\n", i);
+                // printf("GetStatus control request succeeded (%ju)\n", i);
     //            return 0;
             }
             const std::chrono::microseconds durationUs = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - timeStart);
             printf("%.1f requests per second\n", ((float)RequestCount / durationUs.count()) * 1000000);
-        }
+        // }
     
     } catch (const std::exception& e) {
         system("say fail");
