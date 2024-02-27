@@ -56,22 +56,21 @@ int main(int argc, const char* argv[]) {
     bool success = true;
     uintmax_t successCount = 0;
     try {
-        if (argc != 3) {
-            throw std::runtime_error(std::string("Usage: ") + argv[0] + " <vid> <pid>");
+        if (argc != 4) {
+            throw std::runtime_error(std::string("Usage: ") + argv[0] + " <vid> <pid> <iterations>");
         }
         
         const uint16_t vid = std::stoi(argv[1]);
         const uint16_t pid = std::stoi(argv[2]);
+        const uintmax_t iterations = std::stoi(argv[3]);
         
         // Get service
         const io_service_t service = _FindService(vid, pid);
         IOUSBDeviceInterface**const usbDevice = _GetUSBDeviceInterface(service);
         
         // for (;;) {
-            // constexpr uintmax_t RequestCount = 5000;
-            constexpr uintmax_t RequestCount = 1000;
-            auto timeStart = std::chrono::steady_clock::now();
-            for (uintmax_t i=0; i<RequestCount; i++) @autoreleasepool {
+        auto timeStart = std::chrono::steady_clock::now();
+            for (uintmax_t i=0; i<iterations; i++) @autoreleasepool {
                 uint8_t status[2];
                 IOUSBDevRequestTO req = {
                     .bmRequestType     = USBmakebmRequestType(kUSBIn, kUSBStandard, kUSBDevice),
@@ -93,7 +92,7 @@ int main(int argc, const char* argv[]) {
     //            return 0;
             }
             const std::chrono::microseconds durationUs = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - timeStart);
-            printf("%.1f requests per second\n", ((float)RequestCount / durationUs.count()) * 1000000);
+            printf("%.1f requests per second\n", ((float)iterations / durationUs.count()) * 1000000);
         // }
     
     } catch (const std::exception& e) {
